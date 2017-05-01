@@ -1,0 +1,108 @@
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+Option Explicit
+Option Compare Text
+
+Function ZLOOKUP(txt As String, rng As Range) As String
+    Dim a, i As Long, ii As Long
+    a = rng.Value
+    For ii = 1 To UBound(a, 2)
+        For i = 2 To UBound(a, 1)
+            If txt Like "*" & a(i, ii) & "*" Then
+                ZLOOKUP = a(1, ii)
+                Exit For
+            End If
+        Next
+        If Len(ZLOOKUP) Then Exit For
+    Next
+End Function
+
+''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+
+
+'this searches a cell for a number and deletes everything to the right of first number found, including that number.
+
+=LEFT(A1,SEARCH(LOOKUP(99^99,--("0"&MID(A1,MIN(SEARCH({0,1,2,3,4,5,6,7,8,9},A1&"0123456789")),ROW(A1:A1001)))),A1,1)-1)
+
+''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+
+'Note that this function IS case sensitive.
+'You cannot replace one character with two characters.
+'=XSUB("Just an Example","a",":-*!4)") will result
+'in "Just :n Ex:mple"
+
+Function XSUB(ByVal trStr As Variant, frStr As String, toStr As String) As Variant
+
+    Dim iRow As Integer
+    Dim iCol As Integer
+    Dim j As Integer
+    Dim Ar As Variant
+    Dim vfr() As String
+    Dim vto() As String
+
+    ReDim vfr(1 To Len(frStr))
+    ReDim vto(1 To Len(frStr))
+
+    For j = 1 To Len(frStr)
+        vfr(j) = Mid(frStr, j, 1)
+        If Mid(toStr, j, 1) <> "" Then
+            vto(j) = Mid(toStr, j, 1)
+        Else
+            vto(j) = ""
+        End If
+    Next j
+    If IsArray(trStr) Then
+        Ar = trStr
+        For iRow = LBound(Ar, 1) To UBound(Ar, 1)
+            For iCol = LBound(Ar, 2) To UBound(Ar, 2)
+                For j = 1 To Len(frStr)
+                    Ar(iRow, iCol) = Application.Substitute(Ar(iRow, iCol), vfr(j), vto(j))
+                Next j
+            Next iCol
+        Next iRow
+    Else
+        Ar = trStr
+        For j = 1 To Len(frStr)
+            Ar = Application.Substitute(Ar, vfr(j), vto(j))
+        Next j
+    End If
+    XSUB = Ar
+End Function
+
+''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+'Use this to remove text from a string containing numbers
+
+Function numeric(Entry As Variant)
+
+For Count = 1 To Len(Entry)
+temp = Mid(Entry, Count, 1)
+If IsNumeric(temp) Then output = output & temp
+'If IsNumeric(temp) or temp = "." or temp = "," Then output = output & temp
+Next
+numeric = (output * 1)
+End Function
+
+'Xlookup, use formula =Xlookup(Search Cell,lookup table range).
+'This requires a reference table. The formula will return the column heading of the table when values in that column
+'match values in the search cell.  
+'This function is case sensative.
+'Reference table columns must be of equal size.
+
+Function XLookup(txt As String, rng As Range) As String
+    Dim a, i As Long, ii As Long, myPtn As String
+    Static RegX As Object
+    If RegX Is Nothing Then Set RegX = CreateObject("VBScript.RegExp")
+    a = rng.Value
+    For ii = 1 To UBound(a, 2)
+        For i = 2 To UBound(a, 1)
+            If Not IsEmpty(Trim$(a(i, ii))) Then myPtn = myPtn & "|" & Trim$(a(i, ii))
+        Next
+        If Len(myPtn) Then
+            RegX.Pattern = Mid$(myPtn, 2)
+            If RegX.test(txt) Then
+                Xlookup = a(1, ii)
+                Exit Function
+            End If
+        End If
+    Next
+End Function
+
